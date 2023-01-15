@@ -1,112 +1,112 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
-
-import React from 'react';
-import type {Node} from 'react';
+import React, {useState} from 'react';
 import {
-  SafeAreaView,
   ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
   View,
+  TextInput,
+  Button,
+  FlatList,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+export default function App() {
+  const [input, setInput] = useState('');
+  const [data, setData] = useState(null);
+  const [isLoading, setloading] = useState(false);
 
-const Section = ({children, title}): Node => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
+  const serviceURL = 'https://api.postalpincode.in/postoffice/';
 
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
+  const onFetchData = () => {
+    setloading(true);
+    fetch(serviceURL + input)
+      .then(response => response.json())
+      .then(result => {
+        setloading(false);
+        const op =
+          result[0].Status === '404' ? result[0].Message : result[0].PostOffice;
+        setData(op);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+  };
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const ItemDivider = () => {
+    return (
+      <View
+        style={{
+          height: 1,
+          width: '100%',
+          backgroundColor: '#607D8B',
+        }}
+      />
+    );
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+    <View style={styles.container}>
+      {isLoading && (
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" />
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      )}
+      <TextInput
+        style={styles.inputContainer}
+        placeholder={'Please enter city name'}
+        placeholderTextColor={'black'}
+        color={'black'}
+        onChangeText={text => setInput(text)}
+      />
+      <Button title={'Fetch Data!'} onPress={onFetchData} />
+      <View style={styles.dataContainer}>
+        {Array.isArray(data) ? (
+          <FlatList
+            data={data}
+            renderItem={({item}) => (
+              <View>
+                <Text style={styles.textColor}>Name: {item.Name}</Text>
+                <Text style={styles.textColor}>Branch: {item.BranchType} </Text>
+                <Text style={styles.textColor}>State: {item.State}</Text>
+                <Text style={styles.textColor}>Pincode: {item.Pincode}</Text>
+              </View>
+            )}
+            ItemSeparatorComponent={ItemDivider}
+          />
+        ) : (
+          <Text style={{color: 'black'}}>{data}</Text>
+        )}
+      </View>
+    </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    padding: 10,
+    backgroundColor: 'white',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  inputContainer: {
+    paddingLeft: 10,
+    height: 45,
+    borderWidth: 2,
+    backgroundColor: '#FFFFFF',
+    marginBottom: 8,
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
+  dataContainer: {
+    paddingTop: 8,
   },
-  highlight: {
-    fontWeight: '700',
+  loading: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textColor: {
+    color: 'black',
   },
 });
-
-export default App;
